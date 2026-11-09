@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SteelTouch G-код</title>
+  <meta name="description" content="Расчёт G-кода фасок, скруглений и сфер для продольного автомата с учётом радиуса резца.">
+  <meta name="theme-color" content="#F4F5F7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111418" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="SteelTouch">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="screen" id="screen">
+    <h1>Фаски, скругления, сферы</h1>
+    <p class="hint" data-show="turning">Наружное точение. X на диаметр. Радиус резца учитывается в координатах, корректор не нужен.</p>
+    <p class="hint" data-show="parting">Притупление заднего торца при отрезке. Программируется дальний угол резца, со стороны прутка, X на диаметр. Ширина и радиус резца учитываются в координатах.</p>
+    <p class="hint" data-show="milling">Отвод приводной фрезы по Y перед опусканием по X: фреза стоит поперёк детали и не должна задеть заготовку, пока идёт вниз.</p>
+
+    <div class="choice-row" data-choice="tool">
+      <button type="button" class="choice" data-value="turning">Проходной</button>
+      <button type="button" class="choice" data-value="parting">Отрезной</button>
+      <button type="button" class="choice" data-value="milling">Фреза</button>
+    </div>
+    <div class="choice-row" data-choice="shape" data-show="shapes">
+      <button type="button" class="choice" data-value="chamfer">Фаска</button>
+      <button type="button" class="choice" data-value="fillet">Радиус</button>
+      <button type="button" class="choice" data-value="sphere">Сфера</button>
+    </div>
+
+    <!-- Проходной резец -->
+    <div class="group" data-show="turning">
+      <div class="choice-row" data-choice="direction">
+        <button type="button" class="choice" data-value="forward">Прямой ход</button>
+        <button type="button" class="choice" data-value="back">Обратный ход</button>
+      </div>
+      <p class="hint" data-show="back">Тот же контур задом наперёд: те же точки в обратном порядке, дуги в другую сторону. Значения вводятся так же, как при прямом ходе.</p>
+
+      <div class="group" data-show="turning-chamfer">
+        <h2>Начало на детали</h2>
+        <div class="row">
+          <div class="field" data-key="startX"><label>X (диаметр)</label><input></div>
+          <div class="field" data-key="startZ" data-signed><label>Z</label><input></div>
+        </div>
+        <h2>Конец на детали</h2>
+        <div class="row">
+          <div class="field" data-key="endX"><label>X (диаметр)</label><input></div>
+          <div class="field" data-key="endZ" data-signed><label>Z</label><input></div>
+        </div>
+        <div class="row">
+          <div class="field" data-key="angle"><label>Угол к оси Z, °</label><input></div>
+          <div class="field" data-key="length"><label>Длина по Z</label><input></div>
+        </div>
+        <p class="hint">Одну или две координаты можно не вводить: их рассчитают угол и длина. Рассчитанный X растёт по ходу резания.</p>
+      </div>
+
+      <div class="group" data-show="turning-fillet">
+        <div class="choice-row" data-choice="convexity">
+          <button type="button" class="choice" data-value="convex">Выпуклое</button>
+          <button type="button" class="choice" data-value="concave">Вогнутое</button>
+        </div>
+        <div class="row">
+          <div class="field" data-key="startZ" data-signed><label>Начальный Z</label><input></div>
+          <div class="field" data-key="endX"><label>Конечный X (диаметр)</label><input></div>
+        </div>
+        <p class="hint">Скругление симметричное. Выпуклое идёт от торца при начальном Z к диаметру конечного X. Вогнутое идёт от диаметра меньше конечного X на два радиуса к уступу.</p>
+      </div>
+
+      <div class="group" data-show="turning-sphere">
+        <div class="row">
+          <div class="field" data-key="startZ" data-signed><label>Z вершины сферы</label><input></div>
+          <div class="field" data-key="endX"><label>Диаметр детали X</label><input></div>
+        </div>
+        <p class="hint">Сфера на переднем торце: от оси к диаметру детали, G02. Резец начинает за осью, на X минус два радиуса резца, чтобы в центре не осталось бугорка.</p>
+      </div>
+
+      <div class="field" data-key="insertCode" data-text><label>Пластина, например DCMT 11T304 (необязательно)</label><input></div>
+      <p class="hint" id="insert-description" hidden></p>
+      <div class="group" id="lead-group" hidden>
+        <div class="field" data-key="leadAngle"><label>Угол в плане державки, °</label><input></div>
+        <p class="hint">Подставлен типовой угол: SCLCR 95°, SDJCR и SVJBR 93°. Сверьте со своей державкой, для других форм введите его сами. Координаты зависят только от радиуса, а этот угол нужен для проверки кромок.</p>
+      </div>
+      <div class="row">
+        <div class="field" data-key="radius" data-show="turning-radius"><label data-label-for-shape>Радиус детали</label><input></div>
+        <div class="field" data-key="toolRadius"><label>Радиус резца</label><input></div>
+      </div>
+    </div>
+
+    <!-- Отрезной резец -->
+    <div class="group" data-show="parting">
+      <div class="row">
+        <div class="field" data-key="partDiameter"><label>Диаметр детали X</label><input></div>
+        <div class="field" data-key="partEndZ" data-signed><label data-label-for-shape>Z торца отрезки</label><input></div>
+      </div>
+      <div class="group" data-show="parting-chamfer">
+        <div class="row">
+          <div class="field" data-key="partingAngle"><label>Угол к оси Z, °</label><input></div>
+          <div class="field" data-key="partingLength"><label>Длина по Z</label><input></div>
+        </div>
+        <p class="hint">Длина это катет вдоль Z, угол от оси Z. Фаска заканчивается на торце отрезки.</p>
+      </div>
+      <div class="group" data-show="parting-fillet">
+        <div class="field" data-key="partingSize"><label>Радиус детали</label><input></div>
+        <p class="hint">Скругление симметричное: катеты по Z и по радиусу равны R. Заканчивается на торце отрезки.</p>
+      </div>
+      <div class="group" data-show="parting-sphere">
+        <div class="field" data-key="partingSize"><label>Радиус сферы SR</label><input></div>
+        <p class="hint">Сфера на отрезаемом торце: вершина на оси при этом Z. Резец идёт от диаметра к центру и отрезает деталь, заходя за ось на два радиуса резца.</p>
+      </div>
+      <div class="field" data-key="partingCode" data-text><label>Отрезная пластина, например MGMN200 (необязательно)</label><input></div>
+      <div class="row">
+        <div class="field" data-key="partingWidth"><label>Ширина резца</label><input></div>
+        <div class="field" data-key="partingRadius"><label>Радиус резца</label><input></div>
+      </div>
+      <p class="hint">Ширина подставляется из обозначения: MGMN200 это 2 мм. Радиус углов смотрите в каталоге пластины, у MGMN200 обычно 0.2.</p>
+      <div class="field" data-key="grooveX"><label>Канавка до X (необязательно)</label><input></div>
+      <p class="hint">Перед притуплением резец прорезает канавку, чтобы его задняя сторона потом шла по пустому месту. Если не задать, она будет на 0.4 по X глубже притупления. У сферы канавка такая, что ниже неё резец сместится к прутку не больше чем на 0.1 мм.</p>
+    </div>
+
+    <!-- Приводная фреза -->
+    <div class="group" data-show="milling">
+      <div class="row">
+        <div class="field" data-key="millStockDiameter"><label>Диаметр заготовки</label><input></div>
+        <div class="field" data-key="millCutterDiameter"><label>Диаметр фрезы</label><input></div>
+      </div>
+      <p class="hint">Диаметр заготовки берите самый большой в зоне фрезы, включая уступы, до которых она достаёт по Z своим радиусом.</p>
+      <div class="row">
+        <div class="field" data-key="millClearance"><label>Зазор, мм</label><input></div>
+        <div class="field" data-key="millDepthX" data-signed><label>X торца фрезы (необяз.)</label><input></div>
+      </div>
+      <p class="hint">Если фреза опускается только до лыски, введите X её торца в конце хода: тогда отвод меньше. Пустое поле: фреза доходит до оси или ниже.</p>
+      <h2>Y в стойке</h2>
+      <div class="choice-row" data-choice="millYMode">
+        <button type="button" class="choice" data-value="diameter">На диаметр</button>
+        <button type="button" class="choice" data-value="radius">На радиус</button>
+      </div>
+      <p class="hint">На диаметр: Y10 в программе сдвигает фрезу на 5 мм, как X. Проверьте на своём станке: дайте Y10 в ручном режиме и измерьте фактический сдвиг.</p>
+    </div>
+
+    <div id="result" class="result" aria-live="polite"></div>
+  </main>
+
+  <div class="bottom-bar">
+    <button type="button" class="button primary" id="calculate">Рассчитать</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/gcode.js"></script>
+  <script src="js/plot.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

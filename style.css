@@ -1,0 +1,421 @@
+/* Цвета и размеры как в теме приложения: акцент оранжевый, крупные элементы для работы в перчатках. */
+:root {
+  color-scheme: light;
+  --primary: #EF8030;
+  --on-primary: #1F1200;
+  --secondary: #1F6FA5;
+  --background: #F4F5F7;
+  --surface: #FFFFFF;
+  --on-surface: #14181C;
+  --on-surface-variant: #4A5560;
+  --outline: #ADB5BD;
+  --error: #BA1A1A;
+  --inverse-surface: #22272C;
+  --inverse-on-surface: #F1F3F5;
+
+  --touch: 72px;
+  --gap: 12px;
+  --pad: 16px;
+  --radius-field: 12px;
+  --radius-button: 18px;
+  --radius-card: 24px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --secondary: #7DBDE8;
+    --background: #111418;
+    --surface: #1C2126;
+    --on-surface: #F1F3F5;
+    --on-surface-variant: #B8C1C9;
+    --outline: #6C757D;
+    --error: #FFB4AB;
+    --inverse-surface: #E9ECEF;
+    --inverse-on-surface: #22272C;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --secondary: #7DBDE8;
+  --background: #111418;
+  --surface: #1C2126;
+  --on-surface: #F1F3F5;
+  --on-surface-variant: #B8C1C9;
+  --outline: #6C757D;
+  --error: #FFB4AB;
+  --inverse-surface: #E9ECEF;
+  --inverse-on-surface: #22272C;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--on-surface);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  line-height: 26px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.screen {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: calc(var(--pad) + env(safe-area-inset-top)) calc(var(--pad) + env(safe-area-inset-right))
+    var(--pad) calc(var(--pad) + env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 38px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 0;
+  color: var(--on-surface-variant);
+}
+
+.row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- Кнопки */
+
+.button,
+.choice {
+  min-height: var(--touch);
+  border-radius: var(--radius-button);
+  font: inherit;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s, color 0.25s, border-color 0.25s;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Кнопка чуть проседает под пальцем: в перчатках это подтверждает, что нажатие прошло. */
+.button:active,
+.choice:active {
+  transform: scale(0.96);
+}
+
+.button.primary {
+  width: 100%;
+  border: none;
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 8px 24px;
+}
+
+.button.outlined {
+  width: 100%;
+  border: 1.5px solid var(--outline);
+  background: transparent;
+  color: var(--on-surface);
+  padding: 8px 24px;
+}
+
+.choice-row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.choice {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px;
+  border: 1.5px solid var(--outline);
+  background: var(--surface);
+  color: var(--on-surface);
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+/* Три инструмента в ряд на узком телефоне: «Проходной» с галочкой иначе не помещается. */
+@media (max-width: 420px) {
+  .choice-row[data-choice="tool"] .choice {
+    padding: 4px 2px;
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  .choice-row[data-choice="tool"] .choice[aria-pressed="true"]::before {
+    content: "✓";
+    display: block;
+  }
+}
+
+/* Галочка отличает выбранное и без цвета. */
+.choice[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.choice[aria-pressed="true"]::before {
+  content: "✓ ";
+}
+
+/* ---------------------------------------------------------------- Поля */
+
+.field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--touch);
+  padding: 8px 14px;
+  border: 1.5px solid var(--outline);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  cursor: text;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field label {
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--on-surface-variant);
+  cursor: text;
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 20px;
+  line-height: 28px;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.field:focus-within label {
+  color: var(--primary);
+}
+
+.field.invalid {
+  border-color: var(--error);
+  box-shadow: 0 0 0 1px var(--error);
+}
+
+.field.invalid label {
+  color: var(--error);
+}
+
+/* Цифровая клавиатура iPhone без минуса: знак Z меняется кнопкой. */
+.field[data-signed] {
+  padding-right: 60px;
+}
+
+.sign {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  border: 1.5px solid var(--outline);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sign:active {
+  transform: scale(0.94);
+}
+
+/* ---------------------------------------------------------------- Результат */
+
+.result {
+  scroll-margin-top: var(--pad);
+}
+
+.result:empty {
+  display: none;
+}
+
+.error-text {
+  margin: 0;
+  font-size: 20px;
+  line-height: 28px;
+  color: var(--error);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--pad);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.appear {
+  animation: appear 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Roboto Mono", monospace;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.plot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plot canvas {
+  display: block;
+  width: 100%;
+  height: 240px;
+  background: var(--background);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legend svg {
+  flex: none;
+}
+
+.note {
+  margin: 0;
+  color: var(--on-surface-variant);
+}
+
+.warning {
+  margin: 0;
+  color: var(--error);
+}
+
+/* ---------------------------------------------------------------- Нижняя панель */
+
+.bottom-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--background);
+  padding: var(--pad) calc(var(--pad) + env(safe-area-inset-right)) calc(var(--pad) + env(safe-area-inset-bottom))
+    calc(var(--pad) + env(safe-area-inset-left));
+}
+
+.bottom-bar .button {
+  display: block;
+  max-width: 568px;
+  margin: 0 auto;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--touch) + 2 * var(--pad) + 12px + env(safe-area-inset-bottom));
+  z-index: 3;
+  max-width: calc(100% - 2 * var(--pad));
+  padding: 14px 20px;
+  border-radius: 8px;
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appear {
+    animation: none;
+  }
+
+  .button,
+  .choice,
+  .toast {
+    transition: none;
+  }
+}
